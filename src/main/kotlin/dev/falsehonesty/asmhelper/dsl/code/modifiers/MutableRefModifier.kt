@@ -87,7 +87,7 @@ class MutableRefModifier(val codeBlockMethodNode: MethodNode, val codeBlockClass
     }
 
     private fun getDescriptorForRefType(refType: String): String? {
-        return when (refType) {
+        return when (refType.substringAfter("kotlin/jvm/internal/Ref$")) {
             "ObjectRef" -> "Ljava/lang/Object;"
             "IntRef" -> "I"
             "ByteRef" -> "B"
