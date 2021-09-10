@@ -81,7 +81,7 @@ class GeneralModificationWriter(
         fun findMethod(methodName: String, methodDesc: String): MethodNode {
             val mappedName = AsmHelper.remapper.remapMethodName(className, methodName, methodDesc)
             return classNode.methods.firstOrNull { it.name == mappedName }
-                ?: throw IllegalArgumentException("No field named $methodName ($mappedName) found in class $className")
+                ?: throw IllegalArgumentException("No method named $methodName ($mappedName) found in class $className")
         }
     }
 }
