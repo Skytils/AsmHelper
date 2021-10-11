@@ -47,7 +47,7 @@ abstract class InstrumentationClassTransformer : ClassFileTransformer {
         }
 
         val writers = AsmHelper.asmWriters
-            .filter { it.className == className }
+            .filter { it.className.replace(".", "/") == className }
             .ifEmpty { return basicClass }
 
         log("Transforming class $className")
