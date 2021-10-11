@@ -9,6 +9,13 @@ import java.lang.instrument.ClassFileTransformer
 import java.security.ProtectionDomain
 
 abstract class InstrumentationClassTransformer : ClassFileTransformer {
+
+    private companion object {
+        private val pkg = "dev.falsehonesty.asmhelper.".replace(".", "/")
+        private val kotlinPkg = "kotlin.".replace(".", "/")
+    }
+
+    private val myClassName = this.javaClass.name.replace(".", "/")
     private var calledSetup = false
 
     private fun setup() {
@@ -24,7 +31,7 @@ abstract class InstrumentationClassTransformer : ClassFileTransformer {
     override fun transform(classLoader: ClassLoader?, className: String?, p2: Class<*>?, p3: ProtectionDomain?, basicClass: ByteArray?): ByteArray? {
         if (basicClass == null || className == null) return null
 
-        if (className.startsWith("kotlin.") || className.startsWith("dev.falsehonesty.asmhelper.") || className.startsWith(this.javaClass.name)) {
+        if (className.startsWith(kotlinPkg) || className.startsWith(pkg) || className.startsWith(myClassName)) {
             return basicClass
         }
 
@@ -40,7 +47,7 @@ abstract class InstrumentationClassTransformer : ClassFileTransformer {
         }
 
         val writers = AsmHelper.asmWriters
-            .filter { it.className.replace('/', '.') == className }
+            .filter { it.className == className }
             .ifEmpty { return basicClass }
 
         log("Transforming class $className")
