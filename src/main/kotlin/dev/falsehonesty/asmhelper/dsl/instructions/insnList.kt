@@ -808,7 +808,7 @@ open class InsnListBuilder(val toInjectInto: MethodNode) : Opcodes {
 
     fun build(): InsnList = insnList
 
-    internal fun insn(node: AbstractInsnNode) = apply {
+    fun insn(node: AbstractInsnNode) = apply {
         insnList.add(node)
     }
 }
