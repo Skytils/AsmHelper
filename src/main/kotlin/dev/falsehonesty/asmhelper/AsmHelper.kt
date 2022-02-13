@@ -50,7 +50,7 @@ object AsmHelper {
             //#else
             //$$ FMLLoader.isProduction()
             //#endif
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             null
         }
 

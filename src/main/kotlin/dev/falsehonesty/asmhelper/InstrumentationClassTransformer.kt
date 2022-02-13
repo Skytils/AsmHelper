@@ -1,12 +1,18 @@
 package dev.falsehonesty.asmhelper
 
+import dev.falsehonesty.asmhelper.printing.LogLevel
 import dev.falsehonesty.asmhelper.printing.log
-import org.apache.logging.log4j.LogManager
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.tree.ClassNode
+import org.objectweb.asm.util.CheckClassAdapter
+import java.io.File
+import java.io.IOException
+import java.io.PrintWriter
+import java.io.StringWriter
 import java.lang.instrument.ClassFileTransformer
 import java.security.ProtectionDomain
+
 
 abstract class InstrumentationClassTransformer : ClassFileTransformer {
 
@@ -17,6 +23,13 @@ abstract class InstrumentationClassTransformer : ClassFileTransformer {
 
     private val myClassName = this.javaClass.name.replace(".", "/")
     private var calledSetup = false
+
+    protected var exportTransformed = false
+    private val exportDir by lazy {
+        val file = File("./asmhelper/classes/")
+        file.deleteRecursively()
+        return@lazy file
+    }
 
     private fun setup() {
         makeTransformers()
@@ -36,7 +49,12 @@ abstract class InstrumentationClassTransformer : ClassFileTransformer {
         }
 
         if (!calledSetup) {
-            setup()
+            try {
+                setup()
+            } catch (e: Throwable) {
+                log("Exception when setting up transformers: ${e.javaClass.simpleName}")
+                e.printStackTrace()
+            }
             calledSetup = true
         }
 
@@ -70,8 +88,44 @@ abstract class InstrumentationClassTransformer : ClassFileTransformer {
             e.printStackTrace()
         }
 
+        val result = classWriter.toByteArray()
 
-        return classWriter.toByteArray()
+        val stringWriter = StringWriter()
+        val printWriter = PrintWriter(stringWriter)
+        CheckClassAdapter.verify(ClassReader(result), false, printWriter)
+
+        if (stringWriter.buffer.isNotEmpty()) {
+            log(stringWriter.toString(), LogLevel.VERBOSE)
+        }
+        printWriter.close()
+
+        if (exportTransformed) {
+            val outFile =
+                File(exportDir, className.replace('/', File.separatorChar) + ".class")
+            val outDir = outFile.parentFile
+
+            if (!outDir.exists()) {
+                outDir.mkdirs()
+            }
+
+            if (outFile.exists()) {
+                outFile.delete()
+            }
+
+            try {
+                log(
+                    "Saving transformed class \"${className.replace('/', '.')}\" to \"${outFile.absolutePath.replace('\\', '/')}\"",
+                    LogLevel.VERBOSE
+                )
+                outFile.writeBytes(result)
+            } catch (ex: IOException) {
+                log("Could not save transformed class \"${className.replace('/', '.')}\"", LogLevel.VERBOSE)
+                ex.printStackTrace()
+            }
+        }
+
+
+        return result
     }
 
     private fun loadClassResource(name: String): ByteArray {
